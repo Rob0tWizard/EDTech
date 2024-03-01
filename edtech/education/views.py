@@ -1,9 +1,10 @@
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Product, Lesson, Group
 from .serializers import ProductSerializer, LessonSerializer
-from django.utils import timezone
+
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -26,4 +27,20 @@ class AccessProductViewSet(viewsets.ViewSet):
         user = request.user
         product_id = request.data.get('product_id')
         product = get_object_or_404(Product, pk=product_id)
+
+        groups = product.groups.all()
+        if groups.exists():
+            group = groups.order_by('users').first()
+            if group.users.count() < product.max_users_per_group:
+                group.users.add(user)
+                return Response("user added", status=status.HTTP_200_OK)
+            else:
+                return Response("group is full", status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if product.min_users_per_group <= 1:
+                group = Group.objects.create(product=product, name="Группа 1")
+                group.users.add(user)
+                return Response("user added to the group", status=status.HTTP_200_OK)
+            else:
+                return Response("group didn't create", status=status.HTTP_400_BAD_REQUEST)
 
