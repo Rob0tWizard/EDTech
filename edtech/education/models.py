@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
 
 
@@ -25,7 +24,7 @@ class Group(models.Model):
     name = models.CharField(max_length=100)
     in_users = models.IntegerField(default=1)
     max_users = models.IntegerField()
-    users = models.ManyToManyField(User, related_name='groups')
+    users = models.ManyToManyField(User, related_name='group_member')
 
 
 class TokenBlacklist(models.Model):
