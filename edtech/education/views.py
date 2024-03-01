@@ -6,9 +6,8 @@ from .models import Product, Lesson, Group
 from .serializers import ProductSerializer, LessonSerializer
 
 
-
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(start_date__lte=timezone.now())
+    queryset = Product.objects.filter(start_date__lte=timezone.now()).select_related('creator')
     serializer_class = ProductSerializer
 
 
@@ -19,7 +18,7 @@ class LessonViewSet(viewsets.ModelViewSet):
         user = self.request.user
         user_products = user.product_set.all()
         product_name = self.kwargs.get('product_name')
-        return Lesson.objects.filter(product__name=product_name, product__in=user_products)
+        return Lesson.objects.filter(product__name=product_name, product__in=user_products).select_related('product')
 
 
 class AccessProductViewSet(viewsets.ViewSet):
@@ -28,12 +27,12 @@ class AccessProductViewSet(viewsets.ViewSet):
         product_id = request.data.get('product_id')
         product = get_object_or_404(Product, pk=product_id)
 
-        groups = product.groups.all()
+        groups = product.groups.all().prefetch_related('users')
         if groups.exists():
             group = groups.order_by('users').first()
             if group.users.count() < product.max_users_per_group:
                 group.users.add(user)
-                return Response("user added", status=status.HTTP_200_OK)
+                return Response("user added to the group", status=status.HTTP_200_OK)
             else:
                 return Response("group is full", status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -43,4 +42,3 @@ class AccessProductViewSet(viewsets.ViewSet):
                 return Response("user added to the group", status=status.HTTP_200_OK)
             else:
                 return Response("group didn't create", status=status.HTTP_400_BAD_REQUEST)
-
