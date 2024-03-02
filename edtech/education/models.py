@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 
-
 class Product(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='product_creater')
     name = models.CharField(max_length=100)
@@ -12,11 +11,17 @@ class Product(models.Model):
     min_users_per_group = models.IntegerField(default=1)
     max_users_per_group = models.IntegerField(default=10)
 
+    def __str__(self):
+        return self.name
+
 
 class Lesson(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='lessons')
     name = models.CharField(max_length=100)
     video_link = models.URLField()
+
+    def __str__(self):
+        return self.name
 
 
 class Group(models.Model):
@@ -25,6 +30,9 @@ class Group(models.Model):
     in_users = models.IntegerField(default=1)
     max_users = models.IntegerField()
     users = models.ManyToManyField(User, related_name='group_member')
+
+    def __str__(self):
+        return self.name
 
 
 class TokenBlacklist(models.Model):
